@@ -74,7 +74,7 @@ var Tree = function() {
 		this.particlesGeometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
 		this.particlesGeometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
 	
-		this.particlesMaterial = new THREE.PointsMaterial( { size: .05, vertexColors: true } );
+		this.particlesMaterial = new THREE.PointsMaterial( { size: panorama_mode ? .1 : .05, vertexColors: true, fog:false } );
 		this.particlesMesh = new THREE.Points( this.particlesGeometry, this.particlesMaterial );
 		this.particlesMesh.frustumCulled = vr_mode ? false : true;
 	

@@ -3,9 +3,11 @@
 Configuration
 ========================
 */
+
 var vr_mode = false; //Run app as a VR client
 var static_mode = true; //Use fixed terrain generating seed and tree positions.
 var current_time = 0; //Current time.
+var panorama_mode = false;
 
 //Scene and Camera
 var camera, scene, renderer, controls;
@@ -16,6 +18,11 @@ var cameraMoveCallback = false;
 var controlPosition = new THREE.Vector3(0, 12, 0);
 var controlPositionTo = new THREE.Vector3(0, 12, 0);
 
+//Panorama projection
+var panorama_screen_width = 8192;
+var panorama_screen_height = 768;
+var panorama_camera_num = 6;
+var panorama_camera_y = 10;
 
 //Mouse click
 var mouseRaycaster = new THREE.Raycaster();
@@ -25,7 +32,7 @@ var mousePosition = new THREE.Vector2();
 var treesEnabled = true;
 var trees = []; //Holder all tree data
 var currentFocusedTreeIndex = false;
-var particlesPerDept = 250; //The maximum particles of each department
+var particlesPerDept = 500; //The maximum particles of each department
 var loopUntilLeaveGrow = 1; //How many time a particle moves alone the path before generating a leave
 var particleColorSchema = [
 	new THREE.Color('rgb(255,225,90)'), //Lemon
@@ -63,6 +70,10 @@ var lastSpotUpdate = 0;
 //Message
 var messageDom = $('#message-card');
 var messageFocusTimeout = null;
+var revealNewMessage = false;
+var revealCheckInterval = 10; //In second
+var revealLastCheck = 0;
+var revealMessageDisplayTime = 30; //In second
 
 //Terrain
 var terrain;
@@ -93,6 +104,7 @@ var qrCodeEnabled = true;
 App
 ========================
 */
+
 function init() {
 	
 	//Setup scene, camera and conrols
@@ -103,28 +115,82 @@ function init() {
 		scene = new THREE.Scene();
 	}
 	
-	scene.fog = new THREE.FogExp2( 0x000000, 0.02 );
+	if(panorama_mode){
+		scene.fog = new THREE.FogExp2( 0x000000, 0.01  );
+	}else{
+		scene.fog = new THREE.FogExp2( 0x000000, 0.02  );
+	}
 	
 	if(!vr_mode){
 		
-		renderer = new THREE.WebGLRenderer( { antialias: true } );
-		renderer.setSize( window.innerWidth, window.innerHeight );
-		renderer.setPixelRatio(window.devicePixelRatio);
-		renderer.shadowMap.enabled = true;
-		document.body.appendChild( renderer.domElement );
-		camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-		camera.position.set( cameraPosition.x, cameraPosition.y, cameraPosition.z );
+		if(panorama_mode){
+
+			renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.shadowMap.enabled = true;
+			document.body.appendChild( renderer.domElement );
+
+			var cameras = [];
+			var hfov = 360 / panorama_camera_num; //Calculate horizontal angle according to number of cameras
+			var width_per_screen = panorama_screen_width / panorama_camera_num;
+			var height_per_screen = panorama_screen_height;
+			var aspect_ratio = width_per_screen / height_per_screen;
+			var vfov = calcVerticalFov(hfov, width_per_screen, height_per_screen);
+
+			var viewport_width = window.innerWidth / panorama_camera_num;
+			var viewport_height = window.innerHeight;
+
+			for ( var i = 0; i < panorama_camera_num; i++ ) {
+
+				var subcamera = new THREE.PerspectiveCamera( vfov , aspect_ratio, 0.01, 1000 );
+				subcamera.viewport = new THREE.Vector4( i * viewport_width, 0, viewport_width, viewport_height );
+				
+				//Rotate camera by lookAt
+				var angle_offset = 8; //Use angle offset to adjust tree position in viewport
+				var look_angle = THREE.Math.degToRad((hfov * i) + angle_offset);
+				var look_x =  Math.cos(look_angle) * 100;
+				var look_y =  panorama_camera_y;
+				var look_z =  Math.sin(look_angle) * 100;
+
+				subcamera.position.set(0, panorama_camera_y, 0);
+				subcamera.up.set(0, 1, 0);
+				subcamera.lookAt(look_x, look_y, look_z);				
+				subcamera.updateMatrixWorld();
+
+				cameras.push( subcamera );
+				
+			}
+
+			camera = new THREE.ArrayCamera( cameras );
+			camera.updateMatrixWorld();
+
+			window.addEventListener( 'resize', onWindowResize, false );
+
+		}else{
+
+			//Default mode
+			renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.shadowMap.enabled = true;
+			document.body.appendChild( renderer.domElement );
+			camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+			camera.position.set( cameraPosition.x, cameraPosition.y, cameraPosition.z );
+
+			controls = new THREE.OrbitControls( camera, renderer.domElement );		
+			controls.target.set( controlPosition.x, controlPosition.y, controlPosition.z );
+			controls.autoRotate = true;
+			controls.autoRotateSpeed = .5;
+			controls.screenSpacePanning = false;
+			controls.minDistance = 0;
+			controls.maxDistance = 200;
+			controls.maxPolarAngle = Math.PI/2; 
 		
-		controls = new THREE.OrbitControls( camera, renderer.domElement );		
-		controls.target.set( controlPosition.x, controlPosition.y, controlPosition.z );
-		controls.autoRotate = true;
-		controls.autoRotateSpeed = .5;
-		controls.screenSpacePanning = false;
-		controls.minDistance = 0;
-		controls.maxDistance = 200;
-		controls.maxPolarAngle = Math.PI/2; 
-	
-		window.addEventListener( 'resize', onWindowResize, false );
+			window.addEventListener( 'resize', onWindowResize, false );
+				
+
+		}
 	
 	}else{
 
@@ -201,15 +267,15 @@ function init() {
 	//Build terrain
 	
 	terrain = new Terrain();
-	terrain.width = 50;
-	terrain.height = 50;
+	terrain.width = panorama_mode ? 100 : 50;
+	terrain.height = panorama_mode ? 100 : 50;
 	terrain.init();
 	
 	scene.add(terrain.mesh);
 	
 	if(useCachedTerrainPath){
 		$.ajax({
-			url:'data/position/terrain-curves.json',
+			url: panorama_mode ? 'data/position/terrain-curves-360.json' : 'data/position/terrain-curves.json',
 			dataType:'json',
 			async:false
 		}).done(function(res){
@@ -231,20 +297,46 @@ function init() {
 	
 		jQuery.each( collegesData.colleges, function(index, value){
 			
-			if(static_mode){
-			
-				//Static position
-				var x = parseFloat(value.position.x);
-				var y = parseFloat(value.position.y);
-				var z = parseFloat(value.position.z);
+			if(panorama_mode){
+
+				if(static_mode){
+
+					//Static position
+					var x = parseFloat(value.position_360.x);
+					var y = parseFloat(value.position_360.y);
+					var z = parseFloat(value.position_360.z);
+
+				}else{
+
+					var angle = THREE.Math.degToRad((360 / collegesData.colleges.length) * index + 1);
+					var range = THREE.Math.randFloat(35, 38);
+					var x = Math.cos(angle) * range;
+					var z = Math.sin(angle) * range;
+					terrain.raycaster.set(new THREE.Vector3(x, 1000, z), new THREE.Vector3(0, -1, 0));
+					var intersects = terrain.raycaster.intersectObjects([terrain.mesh]);
+					var y = intersects[0].point.y;
+
+				}
+
 			}else{
 			
-				//Dynamic position
-				var x = THREE.Math.randFloat(-15, 15);
-				var z = THREE.Math.randFloat(-15, 15);
-				terrain.raycaster.set(new THREE.Vector3(x, 1000, z), new THREE.Vector3(0, -1, 0));
-        		var intersects = terrain.raycaster.intersectObjects([terrain.mesh]);
-				var y = intersects[0].point.y;
+				if(static_mode){
+
+					//Static position
+					var x = parseFloat(value.position.x);
+					var y = parseFloat(value.position.y);
+					var z = parseFloat(value.position.z);
+
+				}else{
+
+					//Dynamic position
+					var x = THREE.Math.randFloat(-15, 15);
+					var z = THREE.Math.randFloat(-15, 15);
+					terrain.raycaster.set(new THREE.Vector3(x, 1000, z), new THREE.Vector3(0, -1, 0));
+					var intersects = terrain.raycaster.intersectObjects([terrain.mesh]);
+					var y = intersects[0].point.y;
+
+				}
 			}
 			
 			
@@ -268,13 +360,13 @@ function init() {
 			tree.x = x;
 			tree.z = z;			
 			tree.y = y;
-			tree.branchHeight = parseInt(THREE.Math.randFloat(10, 20));
-			tree.branchRadius = THREE.Math.randFloat(.2, .3);
+			tree.branchHeight = panorama_mode ? parseInt(THREE.Math.randFloat(13.5, 17)) : parseInt(THREE.Math.randFloat(10, 20));
+			tree.branchRadius = panorama_mode ? THREE.Math.randFloat(.4, .5) : THREE.Math.randFloat(.2, .3); //Bold
 			tree.branchNum1 = value.depts.length;
 			tree.branchNum2 = 3;
 			tree.branchRotStart = THREE.Math.randFloat(0, 360);
 			tree.branchRotY = THREE.Math.randFloat(60, 90);
-			tree.branchRotZ = THREE.Math.randFloat(35, 55);
+			tree.branchRotZ = panorama_mode ? THREE.Math.randFloat(45, 75) : THREE.Math.randFloat(35, 55);
 			tree.branchLabel = labels;
 			tree.branchColor = colors;
 			tree.terrain = terrain; //For generate terrain path in Branch
@@ -302,7 +394,7 @@ function init() {
 			$.ajax({
 				url:'api/?act=saveTerrainCurve',
 				type:'post',
-				data:{data:JSON.stringify(terrainPathTmpData)}
+				data:{data:JSON.stringify(terrainPathTmpData), mode: panorama_mode ? '360' : 'default'}
 			}).done(function(res){});
 		
 		}
@@ -393,18 +485,55 @@ function init() {
 	//});
 	
 	animate();
-	
+
+	/*
+	//For testing lightSpot
+	$('canvas').click(function(){
+
+		for(var i = 0; i < trees.length; i++){
+			
+			var tree = trees[i];
+			var x = tree.x + THREE.Math.randFloat(-1, 1);
+			var y = tree.y + 4.25
+			var z = tree.z + 4;
+			addLightSpot( tree, x, y, z, .006 );
+
+		}
+
+	});
+	*/
+
 }
+
 
 function onWindowResize() {
 
-	camera.aspect = window.innerWidth / window.innerHeight;
-	camera.updateProjectionMatrix();
+	if(panorama_mode){
 
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	
-	//Resize text
-	resizeIntro();
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		
+		var width = window.innerWidth / panorama_camera_num;
+		var height = window.innerHeight;
+
+		for ( var i = 0; i < panorama_camera_num; i++ ) {
+			var subcamera = camera.cameras[i];
+			subcamera.viewport = new THREE.Vector4( Math.floor( i * width ), 0, Math.ceil( width ), Math.ceil( height ) );
+			subcamera.updateMatrixWorld();
+		}
+
+		renderer.setSize( window.innerWidth, window.innerHeight );
+
+	}else{
+
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+		
+		//Resize text
+		resizeIntro();
+
+	}
 	
 }
 
@@ -485,7 +614,7 @@ function moveCameraTo( view ){
 
 
 function animate(now) {
-	
+
 	current_time = now;
 
 	//Update tag data
@@ -499,10 +628,16 @@ function animate(now) {
         characterLastUpdate = now;
         loadCharacterData();
     }
-	
+
+	//Reveal new message
+	if( revealNewMessage && (now - revealLastCheck >= revealCheckInterval*1000)){
+		revealLastCheck = now;
+		loadNewMessage();
+	}
+
 	requestAnimationFrame( animate );
 	
-	if(!vr_mode){
+	if(!vr_mode && !panorama_mode){
 		controls.update();
 	}
 	
@@ -856,7 +991,7 @@ function addLightSpot(tree, x, y, z, easing, startOffsetY, keyword){
 	lightSpot.init();
 	lightSpots.push(lightSpot);
 	
-	return 	lightSpot;		
+	return lightSpot;		
 }
 
 function checkLightSpotFocus(showMessage){
@@ -989,7 +1124,16 @@ function initFormUI(){
 						lightSpots.push(lightSpot);
 	
 						setTimeout(function(){
+
 							$('#form-seed').addClass('show');
+
+							//panorama-from							
+							if($('.panorama-from').length > 0){
+								setTimeout(function(){
+									lightSpot.status = 3;
+								}, 3000);
+							}
+
 						}, 1500);
 					}, 1500);
 				}
@@ -1083,6 +1227,79 @@ function removeMessage(){
 		lastFocusedLightSpotIndex = false;
 		
 	}
+}
+
+function loadNewMessage(){
+
+	$.ajax({
+		url:'api/?act=loadNewMessage',
+		dataType:'json'
+	}).done(function(res){
+		
+		var template = $('.reveal-card.template'); 
+
+		console.log('load-new-message : '+res.length);
+
+		$.each(res, function(index, message){
+
+			//Find tree index correspond to this message
+			var tree_index = null;
+
+			$.each(trees, function(index, value){
+				if(value.id == message.college_id){
+					tree_index = index;
+				}
+			});
+
+			//Add seed
+			var x = trees[tree_index].x + THREE.Math.randFloat(-2, 2);
+			var y = trees[tree_index].y + THREE.Math.randFloat(2, 4);
+			var z = trees[tree_index].z + 4;
+					
+			var lightSpot = addLightSpot( trees[tree_index], x, y, z, .006 );
+
+			//Add message card
+			var clone = template.clone();
+			clone.removeClass('template');
+			clone.find('.dept').html(message.dept);
+			clone.find('.content').html(message.content);
+			//clone.css('left', THREE.Math.randInt( $(window).width() * .2, $(window).width() * .8));
+			//clone.css('top', THREE.Math.randInt( $(window).height() * .2, $(window).height() * .8));
+
+			$('body').append(clone);
+
+			setTimeout(function(){
+				
+				//var pos = getWorldToScreen(lightSpot.sphere, camera);
+				var pos = getWorldToScreenInArrayCamera(lightSpot.sphere, camera);
+
+				if(pos){
+					
+					clone.css('left', Math.max(20, Math.min(pos.x, window.innerWidth - 160 - 20 )) );
+					clone.css('top', pos.y);
+					clone.addClass('show');
+					
+					setTimeout(function(){
+						clone.addClass('floating');
+	
+						setTimeout(function(){
+							clone.removeClass('show').removeClass('floating');
+							setTimeout(function(){
+								clone.remove();
+								lightSpot.status = 2;
+							}, 1200);
+						}, revealMessageDisplayTime * 1000);
+
+					}, 1000);
+
+				}
+				
+			}, 6000);
+
+		});
+			
+	});
+
 }
 
 /*
@@ -1183,4 +1400,69 @@ function isCharacterExist( _array, character_id, college_id){
 	}
 	
 	return false;
+}
+
+
+/*
+========================
+Mathmatics
+========================
+*/
+function getWorldToScreen(obj, camera){
+	
+	const vector = new THREE.Vector3();
+	const canvas = renderer.domElement; // `renderer` is a THREE.WebGLRenderer
+
+	obj.updateMatrixWorld();  // `obj´ is a THREE.Object3D
+	vector.setFromMatrixPosition(obj.matrixWorld);
+
+	vector.project(camera); // `camera` is a THREE.PerspectiveCamera
+
+	const x = Math.round((0.5 + vector.x / 2) * (canvas.width / window.devicePixelRatio));
+	const y = Math.round((0.5 - vector.y / 2) * (canvas.height / window.devicePixelRatio));
+
+
+	return {x:x, y:y};
+
+}
+
+function getWorldToScreenInArrayCamera(obj, camera){
+
+	var hfov_half = (360 / panorama_camera_num)/2;
+	var subscreen_viewport_width = window.innerWidth / panorama_camera_num;
+	var subscreen_viewport_height = window.innerHeight;
+
+	var obj_angle = THREE.Math.radToDeg(Math.atan2(obj.position.z, obj.position.x));
+	if(obj_angle < 0){ obj_angle += 360; }
+
+	for ( var i = 0; i < camera.cameras.length; i++ ) {
+
+		var vector = camera.cameras[i].getWorldDirection();
+		var camera_angle = THREE.Math.radToDeg(Math.atan2(vector.z, vector.x));
+		var camera_left_angle = camera_angle - hfov_half;
+		var camera_right_angle = camera_angle + hfov_half;
+		if(camera_right_angle < 0){ camera_right_angle += 360; }
+
+		if(obj_angle >= camera_left_angle && obj_angle <= camera_right_angle){
+			
+			var subscreen_position = getWorldToScreen(obj, camera.cameras[i]);
+			var scr_x = THREE.Math.mapLinear(subscreen_position.x, 0, window.innerWidth, 0, subscreen_viewport_width);
+			var scr_y = THREE.Math.mapLinear(subscreen_position.y, 0, window.innerHeight, 0, subscreen_viewport_height);
+
+			return {x: subscreen_viewport_width * i + scr_x, y:scr_y};
+
+		}
+
+	}
+	
+	return null;
+
+}
+
+function calcVerticalFov(hfov, view_width, view_height){
+
+    var hfovRad = hfov * Math.PI / 180;
+    var vfovRad = 2*Math.atan(Math.tan(hfovRad/2)*view_height/view_width);
+
+    return vfovRad* 180 / Math.PI;
 }

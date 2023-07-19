@@ -5,7 +5,7 @@ var LightSpot = function() {
 	this.y = 0;
 	this.z = 0;	
 	this.easing = .006;
-	this.scale = 1;
+	this.scale = panorama_mode ? 3.5 : 1;
 	this.sprite = null;
 	this.sphere = null;
 	this.status = 1; //1:live, 2:move up and fadeout , 3:accept(move down and fade-out), 0:dead
@@ -34,6 +34,7 @@ var LightSpot = function() {
 		sprite.position.z = this.z;
 		sprite.scale.set(0, 0, 1);
 		sprite.renderOrder = 10000;
+		sprite.frustumCulled = false;
 		
 		scene.add( sprite );
 		
@@ -42,7 +43,9 @@ var LightSpot = function() {
 		//Add sphere for interaction
 		var geometry = new THREE.SphereGeometry( .55, 10, 10 );
 		var material = new THREE.MeshBasicMaterial( {color: 0xff0000, transparent:true, opacity:0, alphaTest:.5 } );
+
 		var sphere = new THREE.Mesh( geometry, material );
+		sphere.frustumCulled = false;
 		
 		scene.add(sphere);
 		
@@ -73,7 +76,7 @@ var LightSpot = function() {
 			this.sphere.position.x = this.sprite.position.x;
 			this.sphere.position.y = this.sprite.position.y;
 			this.sphere.position.z = this.sprite.position.z;
-			
+
 		}else if(this.status == 2 || this.status == 3){
 			
 			if(this.sprite.material.opacity > 0){

@@ -26,7 +26,7 @@ var Terrain = function() {
 		
 		this.geometry.verticesNeedUpdate = true;
 	
-		this.material = new THREE.MeshBasicMaterial( {color:new THREE.Color('rgb(90,240,255)') , wireframe:true, transparent:true, opacity:.07 } );
+		this.material = new THREE.MeshBasicMaterial( {color:new THREE.Color('rgb(90,240,255)') , wireframe:true, transparent:true, opacity: panorama_mode ? .09 : .07 } );
 		this.mesh = new THREE.Mesh( this.geometry, this.material );
 		
 	}
@@ -37,9 +37,9 @@ var Terrain = function() {
 		//Define start point, end point
 		var endPoint = new THREE.Vector3(x, y, z);
 		var startPoint = new THREE.Vector3( 
-			endPoint.x + THREE.Math.randFloat(-12, 12),
+			endPoint.x + (panorama_mode? THREE.Math.randFloat(-20, 20) : THREE.Math.randFloat(-12, 12)),
 			endPoint.y,
-			endPoint.z + THREE.Math.randFloat(-12, 12)
+			endPoint.z + (panorama_mode? THREE.Math.randFloat(-20, 20) : THREE.Math.randFloat(-12, 12))
 		);
 		
 		//Generate points
