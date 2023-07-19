@@ -34,7 +34,7 @@ var LightSpot = function() {
 		sprite.position.z = this.z;
 		sprite.scale.set(0, 0, 1);
 		sprite.renderOrder = 10000;
-		sprite.frustumCulled = false;
+		sprite.frustumCulled = panorama_mode ? false : true;
 		
 		scene.add( sprite );
 		
@@ -45,7 +45,7 @@ var LightSpot = function() {
 		var material = new THREE.MeshBasicMaterial( {color: 0xff0000, transparent:true, opacity:0, alphaTest:.5 } );
 
 		var sphere = new THREE.Mesh( geometry, material );
-		sphere.frustumCulled = false;
+		sphere.frustumCulled = panorama_mode ? false : true;
 		
 		scene.add(sphere);
 		
