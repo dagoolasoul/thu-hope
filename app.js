@@ -74,6 +74,10 @@ var revealNewMessage = false;
 var revealCheckInterval = 10; //In second
 var revealLastCheck = 0;
 var revealMessageDisplayTime = 30; //In second
+var soundEnabled = false;
+var sound_dp = [];
+var sound_bg = [];
+var soundIndex = 0;
 
 //Terrain
 var terrain;
@@ -99,6 +103,7 @@ var webcamEnabled = true;
 var qrCodeEnabled = true;
 
 
+
 /*
 ========================
 App
@@ -107,8 +112,7 @@ App
 
 function init() {
 	
-	//Setup scene, camera and conrols
-	
+	//Setup scene, camera and conrols	
 	if(vr_mode){
 		scene = $('a-scene')[0].object3D;
 	}else{
@@ -441,6 +445,20 @@ function init() {
 	if(!vr_mode && qrCodeEnabled && $('#qrcode').length > 0){
 		$('#qrcode-body').qrcode({width: 96,height: 96,text: $('#qrcode-body').attr('data-url')});
 		$('#qrcode').show();
+	}
+
+	//Load sound pool
+	if(soundEnabled){
+		for(var i = 0; i < 2; i++){
+			sound_dp.push(new Audio('assets/sound/dopper-1.mp3'));
+			sound_dp.push(new Audio('assets/sound/dopper-2.mp3'));
+			sound_dp.push(new Audio('assets/sound/dopper-3.mp3'));
+			sound_dp.push(new Audio('assets/sound/dopper-4.mp3'));
+			sound_dp.push(new Audio('assets/sound/dopper-5.mp3'));
+		}
+
+		sound_bg.push({src:new Audio('assets/sound/piano.mp3'), vol:1});
+		sound_bg.push({src:new Audio('assets/sound/string.mp3'), vol:1});
 	}
 
 	//Webcam
@@ -1295,6 +1313,14 @@ function loadNewMessage(){
 				}
 				
 			}, 6000);
+
+			//Play sound
+			if(soundEnabled){
+				var idx = soundIndex % sound_dp.length;
+				sound_dp[idx].volume = .5;
+				sound_dp[idx].play();
+				soundIndex++;
+			}
 
 		});
 			
