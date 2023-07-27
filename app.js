@@ -74,10 +74,6 @@ var revealNewMessage = false;
 var revealCheckInterval = 10; //In second
 var revealLastCheck = 0;
 var revealMessageDisplayTime = 30; //In second
-var soundEnabled = false;
-var sound_dp = [];
-var sound_bg = [];
-var soundIndex = 0;
 
 //Terrain
 var terrain;
@@ -102,6 +98,11 @@ var webcamEnabled = true;
 //QRcode
 var qrCodeEnabled = true;
 
+//Sound 
+var soundEnabled = false;
+var sound_dp = [];
+var sound_bg = [];
+var soundIndex = 0;
 
 
 /*
