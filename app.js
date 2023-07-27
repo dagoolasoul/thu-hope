@@ -1318,7 +1318,7 @@ function loadNewMessage(){
 			//Play sound
 			if(soundEnabled){
 				var idx = soundIndex % sound_dp.length;
-				sound_dp[idx].volume = .5;
+				sound_dp[idx].volume = .75;
 				sound_dp[idx].play();
 				soundIndex++;
 			}
