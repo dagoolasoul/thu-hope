@@ -451,15 +451,15 @@ function init() {
 	//Load sound pool
 	if(soundEnabled){
 		for(var i = 0; i < 2; i++){
-			sound_dp.push(new Audio('assets/sound/dopper-1.mp3'));
-			sound_dp.push(new Audio('assets/sound/dopper-2.mp3'));
-			sound_dp.push(new Audio('assets/sound/dopper-3.mp3'));
-			sound_dp.push(new Audio('assets/sound/dopper-4.mp3'));
-			sound_dp.push(new Audio('assets/sound/dopper-5.mp3'));
+			sound_dp.push(new Audio(use_cdn+'assets/sound/dopper-1.mp3'));
+			sound_dp.push(new Audio(use_cdn+'assets/sound/dopper-2.mp3'));
+			sound_dp.push(new Audio(use_cdn+'assets/sound/dopper-3.mp3'));
+			sound_dp.push(new Audio(use_cdn+'assets/sound/dopper-4.mp3'));
+			sound_dp.push(new Audio(use_cdn+'assets/sound/dopper-5.mp3'));
 		}
 
-		sound_bg.push({src:new Audio('assets/sound/piano.mp3'), vol:1});
-		sound_bg.push({src:new Audio('assets/sound/string.mp3'), vol:1});
+		sound_bg.push({src:new Audio(use_cdn+'assets/sound/piano.mp3'), vol:1});
+		sound_bg.push({src:new Audio(use_cdn+'assets/sound/string.mp3'), vol:1});
 	}
 
 	//Webcam
@@ -1357,7 +1357,7 @@ function buildCharacters(res){
 				if(t != null){
 					
 					var sprite = new THREE.Sprite( new THREE.SpriteMaterial({ 
-						map: new THREE.TextureLoader().load( "assets/character-"+THREE.Math.randInt(1, 4)+".png" ), 
+						map: new THREE.TextureLoader().load( use_cdn+"assets/character-"+THREE.Math.randInt(1, 4)+".png" ), 
 						transparent:true,						
 						depthTest : true,
         				depthWrite : false,

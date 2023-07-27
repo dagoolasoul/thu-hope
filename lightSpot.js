@@ -16,7 +16,7 @@ var LightSpot = function() {
 	
 	this.init = function(){
 		
-		var texture = new THREE.TextureLoader().load( "assets/lightSpot-1.png" );
+		var texture = new THREE.TextureLoader().load( use_cdn+"assets/lightSpot-1.png" );
 		texture.premultiplyAlpha = ! texture.premultiplyAlpha;
 		texture.needsUpdate = true;
 		
