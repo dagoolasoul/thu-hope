@@ -19,8 +19,8 @@ var controlPosition = new THREE.Vector3(0, 12, 0);
 var controlPositionTo = new THREE.Vector3(0, 12, 0);
 
 //Panorama projection
-var panorama_screen_width = 8192;
-var panorama_screen_height = 768;
+var panorama_screen_width = 8192 * window.devicePixelRatio;
+var panorama_screen_height = 768 * window.devicePixelRatio;
 var panorama_camera_num = 6;
 var panorama_camera_y = 10;
 
