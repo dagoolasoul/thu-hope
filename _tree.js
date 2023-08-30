@@ -570,6 +570,7 @@ var Leave = function() {
 		this.tree.leavesGeometry.attributes.position.array[ this.tree.currentLeaveIndex * 3 + 1] = y;
 		this.tree.leavesGeometry.attributes.position.array[ this.tree.currentLeaveIndex * 3 + 2] = z;
 		this.tree.leavesGeometry.setDrawRange( 0, this.tree.currentLeaveIndex );
+			
 		this.tree.leavesGeometry.attributes.position.needsUpdate = true;
 		*/	
 				
