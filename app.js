@@ -104,6 +104,19 @@ var sound_dp = [];
 var sound_bg = [];
 var soundIndex = 0;
 
+//Font 
+var fontLoaded = false;
+
+fontSpy('Noto Sans TC', {
+	glyphs: '希望之森',
+	success: function() {
+		fontLoaded = true;
+		console.log('Font loaded');
+	},
+	failure: function() {
+	  //alert("My Icons failed to load");
+	}
+});
 
 /*
 ========================
@@ -112,6 +125,14 @@ App
 */
 
 function init() {
+
+	//Check if font loaded
+	if(!fontLoaded){
+		setTimeout(function(){
+			init();
+		}, 1000);
+		return false;
+	}
 	
 	//Setup scene, camera and conrols	
 	if(vr_mode){
@@ -129,8 +150,8 @@ function init() {
 	if(!vr_mode){
 		
 		if(panorama_mode){
-
-			renderer = new THREE.WebGLRenderer( { antialias: true } );
+			
+			renderer = new THREE.WebGLRenderer( { antialias: false } );
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			renderer.setPixelRatio(window.devicePixelRatio);
 			renderer.shadowMap.enabled = true;
@@ -143,7 +164,7 @@ function init() {
 			var aspect_ratio = width_per_screen / height_per_screen;
 			var vfov = calcVerticalFov(hfov, width_per_screen, height_per_screen);
 
-			var viewport_width = window.innerWidth / panorama_camera_num;
+			var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
 			var viewport_height = window.innerHeight;
 
 			for ( var i = 0; i < panorama_camera_num; i++ ) {
@@ -357,7 +378,8 @@ function init() {
 				
 				colors.push(particleColorSchema[j % particleColorSchema.length]);
 			}
-		
+			
+
 			var tree = new Tree();
 			tree.label = value.college_label;
 			tree.labelColor = value.college_label_color;
@@ -532,9 +554,8 @@ function onWindowResize() {
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
 		
-		var width = window.innerWidth / panorama_camera_num;
+		var width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
 		var height = window.innerHeight;
-
 		for ( var i = 0; i < panorama_camera_num; i++ ) {
 			var subcamera = camera.cameras[i];
 			subcamera.viewport = new THREE.Vector4( Math.floor( i * width ), 0, Math.ceil( width ), Math.ceil( height ) );
