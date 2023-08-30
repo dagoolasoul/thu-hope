@@ -109,8 +109,10 @@ var Tree = function() {
 		//Add label
 		if(this.label != ''){
 	
-			var label = new SpriteText(this.label /*+'['+this.id+']'*/, .6);
+			var label = new SpriteText(this.label /*+'['+this.id+']'*/, panorama_mode ? .8 : .6);
+			label.fontFace = 'Noto Sans TC';
 			label.fontWeight = 'bold';
+			label.fontSize = 270;
 			label.position.x = this.x;
 			label.position.y = this.y - 1;
 			label.position.z = this.z;
@@ -212,13 +214,17 @@ var Tree = function() {
 			
 			var lastPoint = b.points[b.points.length - 1];
 			
-			b.label = this.branchLabel[branchIndex].label;
-			b.labelColor = this.branchLabel[branchIndex].labelColor;
-			b.id = this.branchLabel[branchIndex].id;
+			if(this.branchLabel[branchIndex]){
+				b.label = this.branchLabel[branchIndex].label;
+				b.labelColor = this.branchLabel[branchIndex].labelColor;
+				b.id = this.branchLabel[branchIndex].id;
+			}
 			
-			if(b.label != ''){
-				var label = new SpriteText( b.label/*+'['+b.id+']'*/, .3);
+			if(b.label && b.label != ''){
+				var label = new SpriteText( b.label/*+'['+b.id+']'*/, panorama_mode ? .5 : .3);
+				label.fontFace = 'Noto Sans TC'; //'微軟正黑體';
 				label.fontWeight = 'bold';
+				label.fontSize = 270;
 				label.position.x = lastPoint.x;
 				label.position.y = lastPoint.y;
 				label.position.z = lastPoint.z;
@@ -577,7 +583,7 @@ var Leave = function() {
 		//Add tag label
 		if(showTags && this.label != ''){
 
-			this.labelSprite = new SpriteText(this.label, .24);
+			this.labelSprite = new SpriteText(this.label, panorama_mode ? .44 : .24);
 			this.labelSprite.position.x = this.x;
 			this.labelSprite.position.y = this.y - 1;
 			this.labelSprite.position.z = this.z;
@@ -585,6 +591,7 @@ var Leave = function() {
 			this.labelSprite.material.depthTest = false;
 			this.labelSprite.fontFace = 'Noto Sans TC'; //'微軟正黑體';
 			this.labelSprite.fontWeight = 'bold';
+			this.labelSprite.fontSize = 270;
 			this.tree.tagGroup.add(this.labelSprite);
 			tags.push(this.labelSprite);
 
