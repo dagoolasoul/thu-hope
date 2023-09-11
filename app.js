@@ -183,6 +183,7 @@ function init() {
 				subcamera.up.set(0, 1, 0);
 				subcamera.lookAt(look_x, look_y, look_z);				
 				subcamera.updateMatrixWorld();
+				subcamera.updateProjectionMatrix();
 
 				cameras.push( subcamera );
 				
@@ -548,21 +549,24 @@ function init() {
 
 
 function onWindowResize() {
-
+	
 	if(panorama_mode){
+		
+		var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
+		var viewport_height = window.innerHeight;
+
+		for ( var i = 0; i < panorama_camera_num; i++ ) {
+			var subcamera = camera.cameras[i];
+			subcamera.viewport = new THREE.Vector4( i * viewport_width, 0, viewport_width, viewport_height );
+			subcamera.updateMatrixWorld();
+			subcamera.updateProjectionMatrix();
+		}
 
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
-		
-		var width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
-		var height = window.innerHeight;
-		for ( var i = 0; i < panorama_camera_num; i++ ) {
-			var subcamera = camera.cameras[i];
-			subcamera.viewport = new THREE.Vector4( Math.floor( i * width ), 0, Math.ceil( width ), Math.ceil( height ) );
-			subcamera.updateMatrixWorld();
-		}
 
 		renderer.setSize( window.innerWidth, window.innerHeight );
+		renderer.setPixelRatio(window.devicePixelRatio);
 
 	}else{
 
