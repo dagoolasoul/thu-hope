@@ -572,10 +572,6 @@ function init() {
 
 	}
 
-	window.addEventListener('dblclick', () => {
-		toggleFullscreen();
-	});
-
 	$(document).on('keydown', function(e){
 		if ( e.originalEvent.code == 'F11' ) {
 			toggleFullscreen();
