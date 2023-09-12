@@ -124,6 +124,19 @@ App
 ========================
 */
 
+function sendBrowserData(data){
+	
+	$.ajax({
+		url: 'saveBrowserData.php',
+		type: 'POST',
+		data: data,
+		async:false
+	}).done(function(res){
+		
+	});
+	
+}
+
 function init() {
 
 	//Check if font loaded
@@ -153,7 +166,7 @@ function init() {
 			
 			renderer = new THREE.WebGLRenderer( { antialias: false } );
 			renderer.setSize( window.innerWidth, window.innerHeight );
-			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 			renderer.shadowMap.enabled = true;
 			document.body.appendChild( renderer.domElement );
 
@@ -165,7 +178,7 @@ function init() {
 			var vfov = calcVerticalFov(hfov, width_per_screen, height_per_screen);
 
 			var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
-			var viewport_height = window.innerHeight;
+			var viewport_height = window.innerHeight * window.devicePixelRatio;
 
 			for ( var i = 0; i < panorama_camera_num; i++ ) {
 
@@ -193,6 +206,14 @@ function init() {
 			camera.updateMatrixWorld();
 
 			window.addEventListener( 'resize', onWindowResize, false );
+
+			sendBrowserData({
+				'window.innerWidth' : window.innerWidth,
+				'window.innerHeight' : window.innerHeight,
+				'window.devicePixelRatio' : window.devicePixelRatio,
+				'viewport_width' : viewport_width,
+				'viewport_height' : viewport_height
+			});
 
 		}else{
 
@@ -525,6 +546,59 @@ function init() {
 		}
 
 	//});
+
+	//Fullscreen
+	function toggleFullscreen(){
+		
+		const fullscreenElement = document.fullscreenElement || document.webkitFullscreenElement;
+		const canvas = renderer.domElement;
+	
+		if (!fullscreenElement) {
+			if (canvas.requestFullscreen) {
+				canvas.requestFullscreen()
+			}
+			else if (canvas.webkitRequestFullscreen) {
+				canvas.webkitRequestFullscreen()
+			}
+		}
+		else {
+			if (document.exitFullscreen) {
+				document.exitFullscreen()
+			}
+			else if (document.webkitExitFullscreen) {
+				document.webkitExitFullscreen()
+			}
+		}
+
+	}
+
+	window.addEventListener('dblclick', () => {
+		toggleFullscreen();
+	});
+
+	$(document).on('keydown', function(e){
+		if ( e.originalEvent.code == 'F11' ) {
+			toggleFullscreen();
+			return false;
+		}
+	});
+
+	document.addEventListener("fullscreenchange", function(event){
+		if (document.fullscreenElement) {
+			sendBrowserData({'fullscreen' : 'true'});
+		} else {
+			sendBrowserData({'fullscreen' : 'false'});
+		}
+		onWindowResize();
+
+		setTimeout(function(){
+			onWindowResize();
+		}, 5000);
+
+		setTimeout(function(){
+			onWindowResize();
+		}, 10000);
+	});
 	
 	animate();
 
@@ -553,7 +627,7 @@ function onWindowResize() {
 	if(panorama_mode){
 		
 		var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
-		var viewport_height = window.innerHeight;
+		var viewport_height = window.innerHeight * window.devicePixelRatio;
 
 		for ( var i = 0; i < panorama_camera_num; i++ ) {
 			var subcamera = camera.cameras[i];
@@ -566,7 +640,15 @@ function onWindowResize() {
 		camera.updateProjectionMatrix();
 
 		renderer.setSize( window.innerWidth, window.innerHeight );
-		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+		sendBrowserData({
+			'window.innerWidth' : window.innerWidth,
+			'window.innerHeight' : window.innerHeight,
+			'window.devicePixelRatio' : window.devicePixelRatio,
+			'viewport_width' : viewport_width,
+			'viewport_height' : viewport_height
+		});
 
 	}else{
 
