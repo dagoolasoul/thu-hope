@@ -19,9 +19,9 @@ var controlPosition = new THREE.Vector3(0, 12, 0);
 var controlPositionTo = new THREE.Vector3(0, 12, 0);
 
 //Panorama projection
-var panorama_screen_width = 8192 * window.devicePixelRatio;
-var panorama_screen_height = 768 * window.devicePixelRatio;
-var panorama_camera_num = 6;
+var panorama_screen_width = 8192;
+var panorama_screen_height = 768;
+var panorama_camera_num = 4;
 var panorama_camera_y = 10;
 var panorama_cameras = [];
 
@@ -175,14 +175,16 @@ function init() {
 			var width_per_screen = panorama_screen_width / panorama_camera_num;
 			var height_per_screen = panorama_screen_height;
 			var aspect_ratio = width_per_screen / height_per_screen;
+			aspect_ratio = aspect_ratio.toFixed(4);
 			var vfov = calcVerticalFov(hfov, width_per_screen, height_per_screen);
+			vfov = vfov.toFixed(4);
 
 			for ( var i = 0; i < panorama_camera_num; i++ ) {
 
 				var subcamera = new THREE.PerspectiveCamera( vfov , aspect_ratio, 0.0001, 10000 );
 				
 				//Rotate camera by lookAt
-				var angle_offset = 8; //Use angle offset to adjust tree position in viewport
+				var angle_offset = 22; //Use angle offset to adjust tree position in viewport
 				var look_angle = THREE.Math.degToRad((hfov * i) + angle_offset);
 				var look_x =  Math.cos(look_angle) * 100;
 				var look_y =  panorama_camera_y;
@@ -204,8 +206,8 @@ function init() {
 				'window.innerWidth' : window.innerWidth,
 				'window.innerHeight' : window.innerHeight,
 				'window.devicePixelRatio' : window.devicePixelRatio,
-				//'viewport_width' : viewport_width,
-				//'viewport_height' : viewport_height
+				'hfov' : hfov,
+				'vfov' : vfov
 			});
 
 		}else{
@@ -621,9 +623,7 @@ function onWindowResize() {
 		sendBrowserData({
 			'window.innerWidth' : window.innerWidth,
 			'window.innerHeight' : window.innerHeight,
-			'window.devicePixelRatio' : window.devicePixelRatio,
-			//'viewport_width' : viewport_width,
-			//'viewport_height' : viewport_height
+			'window.devicePixelRatio' : window.devicePixelRatio
 		});
 
 	}else{
@@ -749,7 +749,6 @@ function animate(now) {
 			
 function render() {
 	
-	
 	//Update particles and leaves
 	for(var i = 0; i < trees.length; i++){	
 		
@@ -861,10 +860,11 @@ function render() {
 		
 	}
 	
+	//Render
 	if(panorama_mode){
 
-		var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
-		var viewport_height = window.innerHeight * window.devicePixelRatio;
+		var viewport_width = window.innerWidth / panorama_camera_num;
+		var viewport_height = window.innerHeight;
 
 		for ( var i = 0; i < panorama_camera_num; i++ ) {
 
@@ -1401,7 +1401,7 @@ function loadNewMessage(){
 			setTimeout(function(){
 				
 				if(panorama_mode){
-					var pos = getWorldToScreenInArrayCamera(lightSpot.sphere, camera);
+					var pos = getWorldToScreenInArrayCamera(lightSpot.sphere);
 				}else{
 					var pos = getWorldToScreen(lightSpot.sphere, camera);
 				}
@@ -1562,15 +1562,14 @@ function getWorldToScreen(obj, camera){
 	const x = Math.round((0.5 + vector.x / 2) * (canvas.width / window.devicePixelRatio));
 	const y = Math.round((0.5 - vector.y / 2) * (canvas.height / window.devicePixelRatio));
 
-
 	return {x:x, y:y};
 
 }
 
-function getWorldToScreenInArrayCamera(obj, camera){
+function getWorldToScreenInArrayCamera(obj){
 
-	var hfov_half = (360 / panorama_camera_num)/2;
-	var subscreen_viewport_width = window.innerWidth / panorama_camera_num;
+	var hfov_half = (360 / panorama_camera_num) * .5;
+	var subscreen_viewport_width = ( window.innerWidth / panorama_camera_num );
 	var subscreen_viewport_height = window.innerHeight;
 
 	var obj_angle = THREE.Math.radToDeg(Math.atan2(obj.position.z, obj.position.x));
