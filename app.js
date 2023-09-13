@@ -23,6 +23,7 @@ var panorama_screen_width = 8192 * window.devicePixelRatio;
 var panorama_screen_height = 768 * window.devicePixelRatio;
 var panorama_camera_num = 6;
 var panorama_camera_y = 10;
+var panorama_cameras = [];
 
 //Mouse click
 var mouseRaycaster = new THREE.Raycaster();
@@ -170,20 +171,15 @@ function init() {
 			renderer.shadowMap.enabled = true;
 			document.body.appendChild( renderer.domElement );
 
-			var cameras = [];
 			var hfov = 360 / panorama_camera_num; //Calculate horizontal angle according to number of cameras
 			var width_per_screen = panorama_screen_width / panorama_camera_num;
 			var height_per_screen = panorama_screen_height;
 			var aspect_ratio = width_per_screen / height_per_screen;
 			var vfov = calcVerticalFov(hfov, width_per_screen, height_per_screen);
 
-			var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
-			var viewport_height = window.innerHeight * window.devicePixelRatio;
-
 			for ( var i = 0; i < panorama_camera_num; i++ ) {
 
-				var subcamera = new THREE.PerspectiveCamera( vfov , aspect_ratio, 0.01, 1000 );
-				subcamera.viewport = new THREE.Vector4( i * viewport_width, 0, viewport_width, viewport_height );
+				var subcamera = new THREE.PerspectiveCamera( vfov , aspect_ratio, 0.0001, 10000 );
 				
 				//Rotate camera by lookAt
 				var angle_offset = 8; //Use angle offset to adjust tree position in viewport
@@ -198,12 +194,9 @@ function init() {
 				subcamera.updateMatrixWorld();
 				subcamera.updateProjectionMatrix();
 
-				cameras.push( subcamera );
+				panorama_cameras.push( subcamera );
 				
 			}
-
-			camera = new THREE.ArrayCamera( cameras );
-			camera.updateMatrixWorld();
 
 			window.addEventListener( 'resize', onWindowResize, false );
 
@@ -211,8 +204,8 @@ function init() {
 				'window.innerWidth' : window.innerWidth,
 				'window.innerHeight' : window.innerHeight,
 				'window.devicePixelRatio' : window.devicePixelRatio,
-				'viewport_width' : viewport_width,
-				'viewport_height' : viewport_height
+				//'viewport_width' : viewport_width,
+				//'viewport_height' : viewport_height
 			});
 
 		}else{
@@ -621,19 +614,6 @@ function init() {
 function onWindowResize() {
 	
 	if(panorama_mode){
-		
-		var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
-		var viewport_height = window.innerHeight * window.devicePixelRatio;
-
-		for ( var i = 0; i < panorama_camera_num; i++ ) {
-			var subcamera = camera.cameras[i];
-			subcamera.viewport = new THREE.Vector4( i * viewport_width, 0, viewport_width, viewport_height );
-			subcamera.updateMatrixWorld();
-			subcamera.updateProjectionMatrix();
-		}
-
-		camera.aspect = window.innerWidth / window.innerHeight;
-		camera.updateProjectionMatrix();
 
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -642,8 +622,8 @@ function onWindowResize() {
 			'window.innerWidth' : window.innerWidth,
 			'window.innerHeight' : window.innerHeight,
 			'window.devicePixelRatio' : window.devicePixelRatio,
-			'viewport_width' : viewport_width,
-			'viewport_height' : viewport_height
+			//'viewport_width' : viewport_width,
+			//'viewport_height' : viewport_height
 		});
 
 	}else{
@@ -756,14 +736,14 @@ function animate(now) {
 		revealLastCheck = now;
 		loadNewMessage();
 	}
-
-	requestAnimationFrame( animate );
 	
 	if(!vr_mode && !panorama_mode){
 		controls.update();
 	}
 	
 	render();
+
+	requestAnimationFrame( animate );
 	
 }
 			
@@ -881,8 +861,32 @@ function render() {
 		
 	}
 	
-	if(!vr_mode){
-		renderer.render( scene, camera );
+	if(panorama_mode){
+
+		var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
+		var viewport_height = window.innerHeight * window.devicePixelRatio;
+
+		for ( var i = 0; i < panorama_camera_num; i++ ) {
+
+			var subcamera = panorama_cameras[i];
+
+			const left = Math.floor( viewport_width * i );
+			const bottom = Math.floor( 0 );
+			const width = Math.floor( viewport_width );
+			const height = Math.floor( viewport_height );
+			
+			renderer.setViewport( left, bottom, width, height );
+			renderer.setScissor( left, bottom, width, height );
+			renderer.setScissorTest( true );
+
+			renderer.render( scene, subcamera );
+
+		}
+
+	}else{
+		if(!vr_mode){
+			renderer.render( scene, camera );
+		}
 	}
 	
 }
@@ -990,6 +994,10 @@ function buildTags(){
 }
 
 function checkTagFocus(showMessage){
+
+	if(panorama_mode){
+		return false;
+	}
 
 	//Add a timer to fix trigger event twice
 	if(vr_mode && current_time - tagLastCheck < 1000) {
@@ -1392,8 +1400,11 @@ function loadNewMessage(){
 
 			setTimeout(function(){
 				
-				//var pos = getWorldToScreen(lightSpot.sphere, camera);
-				var pos = getWorldToScreenInArrayCamera(lightSpot.sphere, camera);
+				if(panorama_mode){
+					var pos = getWorldToScreen(lightSpot.sphere, camera);
+				}else{
+					var pos = getWorldToScreenInArrayCamera(lightSpot.sphere, camera);
+				}
 
 				if(pos){
 					
@@ -1565,9 +1576,9 @@ function getWorldToScreenInArrayCamera(obj, camera){
 	var obj_angle = THREE.Math.radToDeg(Math.atan2(obj.position.z, obj.position.x));
 	if(obj_angle < 0){ obj_angle += 360; }
 
-	for ( var i = 0; i < camera.cameras.length; i++ ) {
+	for ( var i = 0; i < panorama_cameras.length; i++ ) {
 
-		var vector = camera.cameras[i].getWorldDirection();
+		var vector = panorama_cameras[i].getWorldDirection();
 		var camera_angle = THREE.Math.radToDeg(Math.atan2(vector.z, vector.x));
 		var camera_left_angle = camera_angle - hfov_half;
 		var camera_right_angle = camera_angle + hfov_half;
@@ -1575,7 +1586,7 @@ function getWorldToScreenInArrayCamera(obj, camera){
 
 		if(obj_angle >= camera_left_angle && obj_angle <= camera_right_angle){
 			
-			var subscreen_position = getWorldToScreen(obj, camera.cameras[i]);
+			var subscreen_position = getWorldToScreen(obj, panorama_cameras[i]);
 			var scr_x = THREE.Math.mapLinear(subscreen_position.x, 0, window.innerWidth, 0, subscreen_viewport_width);
 			var scr_y = THREE.Math.mapLinear(subscreen_position.y, 0, window.innerHeight, 0, subscreen_viewport_height);
 
