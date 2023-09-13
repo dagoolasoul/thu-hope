@@ -1401,9 +1401,9 @@ function loadNewMessage(){
 			setTimeout(function(){
 				
 				if(panorama_mode){
-					var pos = getWorldToScreen(lightSpot.sphere, camera);
-				}else{
 					var pos = getWorldToScreenInArrayCamera(lightSpot.sphere, camera);
+				}else{
+					var pos = getWorldToScreen(lightSpot.sphere, camera);
 				}
 
 				if(pos){
