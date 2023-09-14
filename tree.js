@@ -110,7 +110,7 @@ var Tree = function() {
 		if(this.label != ''){
 	
 			var label = new SpriteText(this.label /*+'['+this.id+']'*/, panorama_mode ? .7 : .6);
-			label.fontFace = 'Noto Sans TC';
+			label.fontFace = textFont;
 			label.fontWeight = 'bold';
 			label.fontSize = 270;
 			label.position.x = this.x;
@@ -222,7 +222,7 @@ var Tree = function() {
 			
 			if(b.label && b.label != ''){
 				var label = new SpriteText( b.label/*+'['+b.id+']'*/, panorama_mode ? .45 : .3);
-				label.fontFace = 'Noto Sans TC'; //'微軟正黑體';
+				label.fontFace = textFont;
 				label.fontWeight = 'bold';
 				label.fontSize = 270;
 				label.position.x = lastPoint.x;
@@ -588,7 +588,7 @@ var Leave = function() {
 			this.labelSprite.position.z = this.z;
 			this.labelSprite.renderOrder = 100000;
 			this.labelSprite.material.depthTest = false;
-			this.labelSprite.fontFace = 'Noto Sans TC'; //'微軟正黑體';
+			this.labelSprite.fontFace = textFont;
 			this.labelSprite.fontWeight = 'bold';
 			this.labelSprite.fontSize = 270;
 			this.tree.tagGroup.add(this.labelSprite);

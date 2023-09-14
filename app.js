@@ -106,6 +106,9 @@ var sound_bg = [];
 var soundIndex = 0;
 
 //Font 
+var textFont = '微軟正黑體'; //'Noto Sans TC';
+
+/*
 var fontLoaded = false;
 var fontCount = 0;
 var fonts = new Array();
@@ -135,6 +138,7 @@ for(var i = 0; i < fonts.length; i++){
 	);
 
 }
+*/
 
 /*
 ========================
@@ -145,14 +149,14 @@ App
 function init() {
 
 	//Check if font loaded
+	/*
 	if(!fontLoaded){
 		setTimeout(function(){
 			init();
 		}, 1000);
 		return false;
 	}
-
-	console.log('play');
+	*/
 	
 	//Setup scene, camera and conrols	
 	if(vr_mode){
