@@ -107,36 +107,40 @@ var soundIndex = 0;
 
 //Font 
 var fontLoaded = false;
+var fontCount = 0;
+var fonts = new Array();
+fonts.push({name:'Noto Sans TC', url:use_cdn+'assets/font/NotoSans-Regular.woff2'});
+fonts.push({name:'Noto Sans TC', url:use_cdn+'assets/font/NotoSans-Bold.woff2'});
 
-fontSpy('Noto Sans TC', {
-	glyphs: '希望之森',
-	success: function() {
-		fontLoaded = true;
-		console.log('Font loaded');
-	},
-	failure: function() {
-	  //alert("My Icons failed to load");
-	}
-});
+for(var i = 0; i < fonts.length; i++){
+
+	var fontFile = new FontFace(
+		fonts[i].name,
+		"url("+fonts[i].url+")",
+	);
+
+	document.fonts.add(fontFile);
+
+	fontFile.load().then(
+		() => {
+			fontCount++;
+			if(fontCount == 2){
+				fontLoaded = true;
+				console.log('fontLoaded');
+			}
+		},
+		(err) => {
+		  console.error(err);
+		},
+	);
+
+}
 
 /*
 ========================
 App
 ========================
 */
-
-function sendBrowserData(data){
-	
-	$.ajax({
-		url: 'saveBrowserData.php',
-		type: 'POST',
-		data: data,
-		async:false
-	}).done(function(res){
-		
-	});
-	
-}
 
 function init() {
 
@@ -612,6 +616,18 @@ function init() {
 
 }
 
+function sendBrowserData(data){
+	
+	$.ajax({
+		url: 'saveBrowserData.php',
+		type: 'POST',
+		data: data,
+		async:false
+	}).done(function(res){
+		
+	});
+	
+}
 
 function onWindowResize() {
 	
