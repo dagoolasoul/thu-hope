@@ -106,14 +106,13 @@ var sound_bg = [];
 var soundIndex = 0;
 
 //Font 
-var textFont = '微軟正黑體'; //'Noto Sans TC';
+var textFont = 'Noto Sans TC'; //'微軟正黑體';
+var textSize = 128;
 
-/*
 var fontLoaded = false;
 var fontCount = 0;
 var fonts = new Array();
 fonts.push({name:'Noto Sans TC', url:use_cdn+'assets/font/NotoSans-Bold.woff2'});
-fonts.push({name:'Noto Sans TC', url:use_cdn+'assets/font/NotoSans-Regular.woff2'});
 
 for(var i = 0; i < fonts.length; i++){
 
@@ -127,7 +126,7 @@ for(var i = 0; i < fonts.length; i++){
 	fontFile.load().then(
 		() => {
 			fontCount++;
-			if(fontCount == 2){
+			if(fontCount == fonts.length){
 				fontLoaded = true;
 				console.log('fontLoaded');
 			}
@@ -138,7 +137,6 @@ for(var i = 0; i < fonts.length; i++){
 	);
 
 }
-*/
 
 /*
 ========================
@@ -149,14 +147,12 @@ App
 function init() {
 
 	//Check if font loaded
-	/*
 	if(!fontLoaded){
 		setTimeout(function(){
 			init();
 		}, 1000);
 		return false;
 	}
-	*/
 	
 	//Setup scene, camera and conrols	
 	if(vr_mode){
@@ -760,7 +756,6 @@ function animate(now) {
 	}
 	
 	render();
-
 	
 }
 			
@@ -860,7 +855,6 @@ function render() {
 			}
 		}
 	}
-	
   
 	//Update light spot
 	for(var i = 0; i < lightSpots.length; i++){

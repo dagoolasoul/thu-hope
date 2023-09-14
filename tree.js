@@ -112,7 +112,7 @@ var Tree = function() {
 			var label = new SpriteText(this.label /*+'['+this.id+']'*/, panorama_mode ? .7 : .6);
 			label.fontFace = textFont;
 			label.fontWeight = 'bold';
-			label.fontSize = 270;
+			label.fontSize = textSize;
 			label.position.x = this.x;
 			label.position.y = this.y - 1;
 			label.position.z = this.z;
@@ -224,7 +224,7 @@ var Tree = function() {
 				var label = new SpriteText( b.label/*+'['+b.id+']'*/, panorama_mode ? .45 : .3);
 				label.fontFace = textFont;
 				label.fontWeight = 'bold';
-				label.fontSize = 270;
+				label.fontSize = textSize;
 				label.position.x = lastPoint.x;
 				label.position.y = lastPoint.y;
 				label.position.z = lastPoint.z;
@@ -590,7 +590,7 @@ var Leave = function() {
 			this.labelSprite.material.depthTest = false;
 			this.labelSprite.fontFace = textFont;
 			this.labelSprite.fontWeight = 'bold';
-			this.labelSprite.fontSize = 270;
+			this.labelSprite.fontSize = textSize;
 			this.tree.tagGroup.add(this.labelSprite);
 			tags.push(this.labelSprite);
 
