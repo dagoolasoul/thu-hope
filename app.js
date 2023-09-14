@@ -109,8 +109,8 @@ var soundIndex = 0;
 var fontLoaded = false;
 var fontCount = 0;
 var fonts = new Array();
-fonts.push({name:'Noto Sans TC', url:use_cdn+'assets/font/NotoSans-Regular.woff2'});
 fonts.push({name:'Noto Sans TC', url:use_cdn+'assets/font/NotoSans-Bold.woff2'});
+fonts.push({name:'Noto Sans TC', url:use_cdn+'assets/font/NotoSans-Regular.woff2'});
 
 for(var i = 0; i < fonts.length; i++){
 
@@ -151,6 +151,8 @@ function init() {
 		}, 1000);
 		return false;
 	}
+
+	console.log('play');
 	
 	//Setup scene, camera and conrols	
 	if(vr_mode){
@@ -171,7 +173,7 @@ function init() {
 			
 			renderer = new THREE.WebGLRenderer( { antialias: false } );
 			renderer.setSize( window.innerWidth, window.innerHeight );
-			renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+			renderer.setPixelRatio(window.devicePixelRatio);
 			renderer.shadowMap.enabled = true;
 			document.body.appendChild( renderer.domElement );
 
@@ -634,13 +636,7 @@ function onWindowResize() {
 	if(panorama_mode){
 
 		renderer.setSize( window.innerWidth, window.innerHeight );
-		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-		sendBrowserData({
-			'window.innerWidth' : window.innerWidth,
-			'window.innerHeight' : window.innerHeight,
-			'window.devicePixelRatio' : window.devicePixelRatio
-		});
+		renderer.setPixelRatio(window.devicePixelRatio);
 
 	}else{
 
@@ -752,6 +748,8 @@ function animate(now) {
 		revealLastCheck = now;
 		loadNewMessage();
 	}
+
+	requestAnimationFrame( animate );
 	
 	if(!vr_mode && !panorama_mode){
 		controls.update();
@@ -759,7 +757,6 @@ function animate(now) {
 	
 	render();
 
-	requestAnimationFrame( animate );
 	
 }
 			
