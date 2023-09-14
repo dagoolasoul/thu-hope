@@ -109,7 +109,7 @@ var Tree = function() {
 		//Add label
 		if(this.label != ''){
 	
-			var label = new SpriteText(this.label /*+'['+this.id+']'*/, panorama_mode ? .7 : .6);
+			var label = new SpriteText(this.label /*+'['+this.id+']'*/, panorama_mode ? 1 : .7);
 			label.fontFace = textFont;
 			label.fontWeight = 'bold';
 			label.fontSize = textSize;
@@ -221,7 +221,7 @@ var Tree = function() {
 			}
 			
 			if(b.label && b.label != ''){
-				var label = new SpriteText( b.label/*+'['+b.id+']'*/, panorama_mode ? .45 : .3);
+				var label = new SpriteText( b.label/*+'['+b.id+']'*/, panorama_mode ? .7 : .5);
 				label.fontFace = textFont;
 				label.fontWeight = 'bold';
 				label.fontSize = textSize;
@@ -582,7 +582,7 @@ var Leave = function() {
 		//Add tag label
 		if(showTags && this.label != ''){
 
-			this.labelSprite = new SpriteText(this.label, panorama_mode ? .4 : .24);
+			this.labelSprite = new SpriteText(this.label, panorama_mode ? .8 : .44);
 			this.labelSprite.position.x = this.x;
 			this.labelSprite.position.y = this.y - 1;
 			this.labelSprite.position.z = this.z;
