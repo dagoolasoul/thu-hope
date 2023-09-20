@@ -177,6 +177,10 @@ function init() {
 			renderer.shadowMap.enabled = true;
 			document.body.appendChild( renderer.domElement );
 
+			//Add focus target
+			$('body').append('<a href="#" id="focus-lt" style="position:fixed;left:0;top:0;width:50%;height:100%;cursor:default;" onclick="return false;"></a>');
+			$('body').append('<a href="#" id="focus-rt" style="position:fixed;left:50%;top:0;width:50%;height:100%;cursor:default;" onclick="return false;"></a>');
+
 			var hfov = 360 / panorama_camera_num; //Calculate horizontal angle according to number of cameras
 			var width_per_screen = panorama_screen_width / panorama_camera_num;
 			var height_per_screen = panorama_screen_height;
