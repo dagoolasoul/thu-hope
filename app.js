@@ -23,7 +23,6 @@ var panorama_screen_width = 8192;
 var panorama_screen_height = 768;
 var panorama_camera_num = 4;
 var panorama_camera_y = 10;
-var panorama_cameras = [];
 
 //Mouse click
 var mouseRaycaster = new THREE.Raycaster();
@@ -177,10 +176,10 @@ function init() {
 			renderer.shadowMap.enabled = true;
 			document.body.appendChild( renderer.domElement );
 
-			//Add focus target
-			$('body').append('<a href="#" id="focus-lt" style="position:fixed;left:0;top:0;width:50%;height:100%;cursor:default;" onclick="return false;"></a>');
-			$('body').append('<a href="#" id="focus-rt" style="position:fixed;left:50%;top:0;width:50%;height:100%;cursor:default;" onclick="return false;"></a>');
+			//Add focus
+			$('body').append('<a href="#" style="position:fixed;left:50px;top:50px;right:50px;bottom:50px;" onclick="return false;"><img src="image/pixel.png" style="display:block;width:100%;height:100%;" /></a>');
 
+			var cameras = [];
 			var hfov = 360 / panorama_camera_num; //Calculate horizontal angle according to number of cameras
 			var width_per_screen = panorama_screen_width / panorama_camera_num;
 			var height_per_screen = panorama_screen_height;
@@ -189,9 +188,14 @@ function init() {
 			var vfov = calcVerticalFov(hfov, width_per_screen, height_per_screen);
 			vfov = vfov.toFixed(4);
 
+			var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
+			var viewport_height = window.innerHeight * window.devicePixelRatio;
+
+
 			for ( var i = 0; i < panorama_camera_num; i++ ) {
 
 				var subcamera = new THREE.PerspectiveCamera( vfov , aspect_ratio, 0.0001, 10000 );
+				subcamera.viewport = new THREE.Vector4( i * viewport_width, 0, viewport_width, viewport_height );
 				
 				//Rotate camera by lookAt
 				var angle_offset = 22; //Use angle offset to adjust tree position in viewport
@@ -206,19 +210,15 @@ function init() {
 				subcamera.updateMatrixWorld();
 				subcamera.updateProjectionMatrix();
 
-				panorama_cameras.push( subcamera );
+				cameras.push( subcamera );
 				
 			}
 
-			window.addEventListener( 'resize', onWindowResize, false );
+			camera = new THREE.ArrayCamera( cameras );
+			camera.updateMatrixWorld();
 
-			sendBrowserData({
-				'window.innerWidth' : window.innerWidth,
-				'window.innerHeight' : window.innerHeight,
-				'window.devicePixelRatio' : window.devicePixelRatio,
-				'hfov' : hfov,
-				'vfov' : vfov
-			});
+
+			window.addEventListener( 'resize', onWindowResize, false );
 
 		}else{
 
@@ -575,21 +575,21 @@ function init() {
 			}
 		}
 
+		window.focus();
+
 	}
 
+	/*
 	$(document).on('keydown', function(e){
 		if ( e.originalEvent.code == 'F11' ) {
 			toggleFullscreen();
 			return false;
 		}
 	});
+	*/
 
 	document.addEventListener("fullscreenchange", function(event){
-		if (document.fullscreenElement) {
-			sendBrowserData({'fullscreen' : 'true'});
-		} else {
-			sendBrowserData({'fullscreen' : 'false'});
-		}
+		
 		onWindowResize();
 
 		setTimeout(function(){
@@ -622,25 +622,25 @@ function init() {
 
 }
 
-function sendBrowserData(data){
-	
-	$.ajax({
-		url: 'saveBrowserData.php',
-		type: 'POST',
-		data: data,
-		async:false
-	}).done(function(res){
-		
-	});
-	
-}
-
 function onWindowResize() {
 	
 	if(panorama_mode){
+		
+		var viewport_width = (window.innerWidth / panorama_camera_num) * window.devicePixelRatio;
+		var viewport_height = window.innerHeight * window.devicePixelRatio;
+
+		for ( var i = 0; i < panorama_camera_num; i++ ) {
+			var subcamera = camera.cameras[i];
+			subcamera.viewport = new THREE.Vector4( i * viewport_width, 0, viewport_width, viewport_height );
+			subcamera.updateMatrixWorld();
+			subcamera.updateProjectionMatrix();
+		}
+
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
 
 		renderer.setSize( window.innerWidth, window.innerHeight );
-		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 	}else{
 
@@ -652,6 +652,7 @@ function onWindowResize() {
 		resizeIntro();
 
 	}
+
 	
 }
 
@@ -876,32 +877,8 @@ function render() {
 	}
 	
 	//Render
-	if(panorama_mode){
-
-		var viewport_width = window.innerWidth / panorama_camera_num;
-		var viewport_height = window.innerHeight;
-
-		for ( var i = 0; i < panorama_camera_num; i++ ) {
-
-			var subcamera = panorama_cameras[i];
-
-			const left = Math.floor( viewport_width * i );
-			const bottom = Math.floor( 0 );
-			const width = Math.floor( viewport_width );
-			const height = Math.floor( viewport_height );
-			
-			renderer.setViewport( left, bottom, width, height );
-			renderer.setScissor( left, bottom, width, height );
-			renderer.setScissorTest( true );
-
-			renderer.render( scene, subcamera );
-
-		}
-
-	}else{
-		if(!vr_mode){
-			renderer.render( scene, camera );
-		}
+	if(!vr_mode){
+		renderer.render( scene, camera );
 	}
 	
 }
@@ -1581,18 +1558,18 @@ function getWorldToScreen(obj, camera){
 
 }
 
-function getWorldToScreenInArrayCamera(obj){
+function getWorldToScreenInArrayCamera(obj, camera){
 
-	var hfov_half = (360 / panorama_camera_num) * .5;
-	var subscreen_viewport_width = ( window.innerWidth / panorama_camera_num );
+	var hfov_half = (360 / panorama_camera_num)/2;
+	var subscreen_viewport_width = window.innerWidth / panorama_camera_num;
 	var subscreen_viewport_height = window.innerHeight;
 
 	var obj_angle = THREE.Math.radToDeg(Math.atan2(obj.position.z, obj.position.x));
 	if(obj_angle < 0){ obj_angle += 360; }
 
-	for ( var i = 0; i < panorama_cameras.length; i++ ) {
+	for ( var i = 0; i < camera.cameras.length; i++ ) {
 
-		var vector = panorama_cameras[i].getWorldDirection();
+		var vector = camera.cameras[i].getWorldDirection();
 		var camera_angle = THREE.Math.radToDeg(Math.atan2(vector.z, vector.x));
 		var camera_left_angle = camera_angle - hfov_half;
 		var camera_right_angle = camera_angle + hfov_half;
@@ -1600,7 +1577,7 @@ function getWorldToScreenInArrayCamera(obj){
 
 		if(obj_angle >= camera_left_angle && obj_angle <= camera_right_angle){
 			
-			var subscreen_position = getWorldToScreen(obj, panorama_cameras[i]);
+			var subscreen_position = getWorldToScreen(obj, camera.cameras[i]);
 			var scr_x = THREE.Math.mapLinear(subscreen_position.x, 0, window.innerWidth, 0, subscreen_viewport_width);
 			var scr_y = THREE.Math.mapLinear(subscreen_position.y, 0, window.innerHeight, 0, subscreen_viewport_height);
 
@@ -1613,6 +1590,7 @@ function getWorldToScreenInArrayCamera(obj){
 	return null;
 
 }
+
 
 function calcVerticalFov(hfov, view_width, view_height){
 
